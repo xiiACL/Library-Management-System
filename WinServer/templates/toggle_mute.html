@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Microphone</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        #muteButton {
+            font-size: 20px;
+            padding: 10px 20px;
+            margin-top: 20px;
+        }
+        #status {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Control Microphone</h1>
+    <button id="muteButton" onclick="toggleMute()">Mute/Unmute Microphone</button>
+    <p id="status">Microphone is unmuted</p>
+
+    <script>
+        function toggleMute() {
+            fetch("/toggle_mute", {
+                method: "POST"
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Update the button text and status based on the mute state
+                if (data.muted) {
+                    document.getElementById('status').textContent = "Microphone is muted";
+                } else {
+                    document.getElementById('status').textContent = "Microphone is unmuted";
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+            });
+        }
+    </script>
+</body>
+</html>

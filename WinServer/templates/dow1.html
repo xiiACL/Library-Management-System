@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>YouTube Downloader</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-md bg-gray-800 rounded-2xl shadow-xl p-6 space-y-5">
+    <h1 class="text-xl font-bold">🎵 YouTube Downloader</h1>
+
+    <form method="POST" action="{{ url_for('downloader') }}" class="space-y-3">
+      <input type="url" name="url" required placeholder="Enter YouTube URL"
+        class="w-full p-3 rounded-xl bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+      <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 rounded-xl text-white font-semibold">
+        ⬇️ Download Audio
+      </button>
+    </form>
+
+    <div class="w-full bg-gray-600 rounded-full h-4 overflow-hidden">
+      <div id="progress-bar" class="bg-green-500 h-4 w-0 transition-all"></div>
+    </div>
+
+    <div id="log" class="text-sm bg-gray-700 rounded-lg p-3 overflow-auto h-40 font-mono whitespace-pre-wrap"></div>
+  </div>
+
+  <script>
+    const socket = io();
+    const log = document.getElementById("log");
+    const bar = document.getElementById("progress-bar");
+
+    socket.on("progress", data => {
+      const div = document.createElement("div");
+      div.textContent = data;
+      log.appendChild(div);
+      log.scrollTop = log.scrollHeight;
+
+      const match = data.match(/progress:\s*(\d+)%/i);
+      if (match) bar.style.width = parseInt(match[1]) + "%";
+    });
+
+    socket.on("download_ready", data => {
+      // على Android: يبدأ التحميل مباشرة
+      const link = document.createElement("a");
+      link.href = data.url;
+      link.download = data.title + ".mp3";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    });
+  </script>
+</body>
+</html>

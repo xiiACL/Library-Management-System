@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>➕ إضافة كتاب</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-4 max-w-xl mx-auto">
+  <h1 class="text-2xl font-bold mb-6">➕ إضافة كتاب جديد</h1>
+
+  <form action="/add" method="POST" enctype="multipart/form-data" class="space-y-4">
+    <label>
+      عنوان الكتاب:
+      <input type="text" name="title" required class="w-full border px-3 py-2 rounded" />
+    </label>
+
+    <label>
+      المؤلف:
+      <input type="text" name="author" class="w-full border px-3 py-2 rounded" />
+    </label>
+
+    <label>
+      التصنيف:
+      <select name="category" class="w-full border px-3 py-2 rounded" required>
+        <option value="">اختر التصنيف</option>
+        <option value="رواية">رواية</option>
+        <option value="ديني">ديني</option>
+        <option value="سيرة">سيرة</option>
+        <option value="ثقافة">ثقافة</option>
+        <option value="تاريخ">تاريخ</option>
+        <option value="علوم">علوم</option>
+        <option value="تطوير ذات">تطوير ذات</option>
+
+      </select>
+    </label>
+
+    <label>
+      إجمالي الصفحات:
+      <input type="number" name="total_pages" min="0" class="w-full border px-3 py-2 rounded" />
+    </label>
+
+    <label>
+      الصفحة الحالية:
+      <input type="number" name="current_page" min="0" class="w-full border px-3 py-2 rounded" />
+    </label>
+
+    <label>
+      تاريخ الشراء:
+      <input type="date" name="purchase_date" class="w-full border px-3 py-2 rounded" />
+    </label>
+
+    <label>
+      آخر قراءة:
+      <input type="datetime-local" name="last_read" class="w-full border px-3 py-2 rounded" />
+    </label>
+
+    <label>
+      نوع الكتاب:
+      <select name="book_format" class="w-full border px-3 py-2 rounded">
+        <option value="">اختياري</option>
+        <option value="PDF">PDF</option>
+        <option value="ورقي">ورقي</option>
+      </select>
+    </label>
+
+    <label>
+      صورة الغلاف:
+      <input type="file" name="cover_image" accept="image/*" class="w-full border px-3 py-2 rounded" />
+    </label>
+
+    <label>
+      اسم السلسلة (إن وجد):
+      <input type="text" name="series_name" class="w-full border px-3 py-2 rounded" />
+    </label>
+
+    <label>
+      رقم الجزء (إن وجد):
+      <input type="number" name="series_part" min="1" class="w-full border px-3 py-2 rounded" />
+    </label>
+
+    <div class="flex gap-4">
+      <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">إضافة</button>
+      <a href="/Books" class="bg-gray-600 text-white px-4 py-2 rounded">عودة</a>
+    </div>
+  </form>
+</body>
+</html>

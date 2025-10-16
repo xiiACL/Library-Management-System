@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Stream</title>
+    <style>
+        body {
+            text-align: center;
+            background-color: #000;
+            color: white;
+        }
+        video {
+            max-width: 100%;
+            max-height: 100%;
+            border: 5px solid white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Watch My Video</h1>
+    <video controls autoplay>
+        <source src="http://192.168.1.151:5000/video" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+</body>
+</html>
