@@ -8,16 +8,13 @@ app.config['SECRET_KEY'] = 'supersecretkey'  # غيّرها عندك
 
 # ربط SocketIO مع Flask باستخدام eventlet
 socketio = SocketIO(app, async_mode="eventlet", cors_allowed_origins="*")
-
 import logging
 from datetime import date, timedelta
 import socket
 from flask import jsonify, send_file,abort
 import time
 from downloader.downloaderscript import audio
-from apscheduler.schedulers.background import BackgroundScheduler
 import shutil
-
 import os
 import sqlite3
 from flask import render_template, request, redirect, url_for, send_from_directory
@@ -30,29 +27,36 @@ from datetime import datetime
 
 #######################SERVER SETTINGS#######################
 
-UPLOAD_FOLDER = r"A:\Library\Python\FTP\FTP\uploads"
+## Giting local IP
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+try:
+    s.connect(("8.8.8.8", 80))
+    local_ip = s.getsockname()[0]
+finally:
+    s.close()
+
+##############
+socketio = SocketIO(app, async_mode="eventlet", cors_allowed_origins="*")
+
+UPLOAD_FOLDER = r"WinServer/uploads"
 TEXT_STORAGE = []
-TEXT_UPLOAD_FOLDER = r"A:\Library/Python/FTP/FTP/text"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-hostname = "192.168.1.177"
-local_ip = socket.gethostbyname(hostname)
-TEXT_FILE_PATH = r"A:\Library/Python/FTP/FTP/text/uploaded_texts.txt"
+TEXT_UPLOAD_FOLDER = r"WinServer/text"
+
+TEXT_FILE_PATH = r"WinServer/text/uploaded_texts.txt"
+
 last_received_command = None
 #app = Flask(__name__)
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
-socketio = SocketIO(app, async_mode="eventlet", cors_allowed_origins="*")
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['image_folder'] = r"A:\Library\Python\FTP\FTP\uploads\bookimages"
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-app.config['images_folder'] = r"A:\Library\Python\FTP\FTP\uploads\bookimages"
+app.config['bookimages'] = r"WinServer/uploads/bookimages"
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['backup_folder'] = 'backup'
-os.makedirs(app.config['backup_folder'], exist_ok=True)
-LOG_FILE = r"A:\Library/Python/FTP/FTP/log/book_logs"
-DB_NAME = r"A:\Library/Python/FTP/FTP/ryadh.db"
-LOG_FILE_RYADH = r"A:\Library/Python/FTP/FTP/log/ryadh.log"
-if not os.path.exists(app.config['images_folder']):
-    os.makedirs(app.config['images_folder'])
+LOG_FILE = r"WinServer/log/book_logs"
+Sport_NAME = r"WinServer/ryadh.db"
+Books_NAME = r"WinServer/books.db"
+LOG_FILE_RYADH = r"WinServer/log/ryadh.log"
+
 
 weeks_data = [
     [("الجمعة", 10, 2), ("السبت", 12, 2), ("الأحد", 15, 2), ("الاثنين", 10, 2), ("الثلاثاء", 15, 2), ("الأربعاء", 0, 0), ("الخميس", 20, 2)],
@@ -61,74 +65,109 @@ weeks_data = [
     [("الجمعة", 25, 5), ("السبت", 30, 5), ("الأحد", 20, 5), ("الاثنين", 25, 5), ("الثلاثاء", 30, 5), ("الأربعاء", 0, 0), ("الخميس", 35, 5)],
 ]
 
+##### Create the folders/files:
+def foldersandfiles():
+    os.makedirs("WinServer/uploads", exist_ok=True)
+    os.makedirs("WinServer/text", exist_ok=True)
+    os.makedirs("WinServer/uploads/bookimages", exist_ok=True)
+    os.makedirs("WinServer/backup", exist_ok=True)
+    os.makedirs("WinServer/log", exist_ok=True)
+    os.makedirs("WinServer/backup", exist_ok=True)
+    os.makedirs("WinServer/streamdvideo", exist_ok=True)
+    os.makedirs("WinServer/downloader", exist_ok=True)
 
+def ryadh_db(db_path: str = "books.db", overwrite: bool = False):
+    conn = sqlite3.connect(Sport_NAME)
+    c = conn.cursor()
+    if Sport_NAME.exists() and not overwrite:
+        raise FileExistsError(f"Database already exists: {Sport_NAME}")
+
+    # Drop the old table if overwrite is True
+    if overwrite:
+        c.execute("DROP TABLE IF EXISTS books")
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS entries (
+            date TEXT PRIMARY KEY,
+            distance REAL,
+            time REAL,
+            odo REAL,
+            calories REAL
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+
+def books_db(db_path: str = "books.db", overwrite: bool = False):
+    """
+    Create a new SQLite database with a table named 'books'
+    matching the exact schema you showed in your screenshot.
+    """
+
+    db_file = "WinServer/books.db"
+    # Connect (this creates the file automatically if it doesn’t exist)
+    conn = sqlite3.connect(db_file)
+    cur = conn.cursor()
+    if db_file.exists() and not overwrite:
+        raise FileExistsError(f"Database already exists: {db_file}")
+
+    # Drop the old table if overwrite is True
+    if overwrite:
+        cur.execute("DROP TABLE IF EXISTS books")
+
+    # Create the 'books' table
+    cur.execute("""
+    CREATE TABLE books (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT,
+        author TEXT,
+        category TEXT,
+        total_pages INTEGER,
+        current_page INTEGER,
+        purchase_date TEXT,
+        last_read TEXT,
+        book_format TEXT,
+        cover_image TEXT,
+        created_at TEXT,
+        updated_at TEXT,
+        series_name TEXT,
+        series_part INTEGER
+    );
+    """)
+
+    conn.commit()
+    conn.close()
+    print(f"✅ Database created successfully at: {db_file}")
+
+#####
 import secrets
 secretcode = secrets.token_hex(16)  # يعطيك 32 حرف hex عشوائي
 
 
 #######################SERVER SETTINGS#######################
 
-#######################UNUSED COMNDS#######################
 
-#is_muted = False
-
-# @app.route('/toggle_mute')
-# def toggle_mute():
-#     global is_muted
-#     render_template('toggle_mic.html',muted=False)
-#
-#
-#     # Toggle the mute status
-#     is_muted = not is_muted
-#
-#     # Return the updated mute state as JSON response
-#     # UNUSED ONE
-#     return jsonify(muted=is_muted)
-#######
-
-# @app.route('/vault')
-# def load_passwords():
-#     data = []
-#     with open('NortonPasswordManager_06_13_25_09_16.csv', encoding='utf-8-sig') as f:
-#         reader = csv.DictReader(f, delimiter=',')#        for row in reader:
-# #            data.append(row)
-#         for row in reader:
-#             data.append(row)
-#     return render_template('vault.html', data=data)
-#######
-
-
-#######################UNUSED COMNDS#######################
-
-#######################UNUSED WINDOWS COMNDS#######################
-
-# Function to handle quitting the app
-def on_quit(icon, item):
-    icon.stop()  # Stop the icon and the background task
-
-# def run_server():
-#     os.startfile(url)
-
-def open_folder():
-    os.startfile(r"A:\Library/Python/FTP/FTP")
-
-#######################UNUSED WINDOWS COMNDS#######################
 
 logging.basicConfig(
-    filename='app.log',         # اسم ملف اللوج (هيتخلق في نفس مسار السكربت)
-    level=logging.DEBUG,         # درجة التفاصيل (DEBUG عشان تسجل كل شي)
-    format='%(asctime)s %(levelname)s: %(message)s',  # تنسيق السجل مع الوقت
+    filename='app.log',
+    level=logging.DEBUG,
+    format='%(asctime)s %(levelname)s: %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 #######################DEF'S#######################
 
 def start_server():
-    init_db()
+#    init_db()
     # scheduler = BackgroundScheduler()
     # scheduler.add_job(func=backup_db, trigger='interval', weeks=1)
     # scheduler.start()
     print("starting server...")
-    socketio.run(app, host="192.168.1.177", port=5000,debug=True)
+    print(f"Your IP is: {local_ip}")
+    socketio.run(app, host=local_ip, port=5000,debug=True)
+    # books_db(Books_NAME, overwrite=False)
+    # ryadh_db(Sport_NAME, overwrite=False)
+
 #######################DEF'S#######################
 
 # Function that runs in a separate thread to print the received command
@@ -169,7 +208,7 @@ def quiz():
     # STUDY QUIZ EXAM
 @app.route('/video')
 def stream_video():
-    video_dir = r"A:\Library/Python/MainTools/MainTool/streamd video"
+    video_dir = r"WinServer/streamdvideo"
 
     # List all mp4 files in the directory
     mp4_files = [f for f in os.listdir(video_dir) if f.lower().endswith('.mp4')]
@@ -374,7 +413,7 @@ def downloader():
 
 def backup_db():
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    src = r"A:\Library\Python\FTP\FTP\books.db"
+    src = Books_NAME
     dst = os.path.join(app.config['backup_folder'], f'books_backup_{timestamp}.db')
     shutil.copy2(src, dst)
     print(f"[✔] تم إنشاء نسخة احتياطية: {dst}")
@@ -391,7 +430,7 @@ def allowed_file(filename):
     # CHECK FILE COMMAND
 
 def init_db():
-    with sqlite3.connect(r"A:\Library\Python\FTP\FTP\books.db") as conn:
+    with sqlite3.connect(Books_NAME) as conn:
         c = conn.cursor()
         c.execute('''
             CREATE TABLE IF NOT EXISTS books (
@@ -430,7 +469,7 @@ def books():
     else:
         query += " ORDER BY last_read DESC"
 
-    with sqlite3.connect(r"A:\Library\Python\FTP\FTP\books.db") as conn:
+    with sqlite3.connect(Books_NAME) as conn:
         c = conn.cursor()
         c.execute(query, params)
         books = c.fetchall()
@@ -462,7 +501,7 @@ def add_book():
                 file.save(os.path.join(app.config['images_folder'], filename))
                 cover_image = filename
 
-        with sqlite3.connect(r"A:\Library\Python\FTP\FTP\books.db") as conn:
+        with sqlite3.connect(Books_NAME) as conn:
             c = conn.cursor()
             c.execute('''
                 INSERT INTO books (title, author, category, total_pages, current_page, purchase_date, last_read,
@@ -478,7 +517,7 @@ def add_book():
     # ADD BOOK TO BOOKSHELF COMMAND
 @app.route('/edit/<int:book_id>', methods=['GET', 'POST'])
 def edit_book(book_id):
-    with sqlite3.connect(r"A:\Library\Python\FTP\FTP\books.db") as conn:
+    with sqlite3.connect(Books_NAME) as conn:
         c = conn.cursor()
         if request.method == 'POST':
             title = request.form['title']
@@ -526,14 +565,14 @@ def edit_book(book_id):
 
 @app.route('/delete/<int:book_id>', methods=['POST'])
 def delete_book(book_id):
-    with sqlite3.connect(r"A:\Library\Python\FTP\FTP\books.db") as conn:
+    with sqlite3.connect(Books_NAME) as conn:
         c = conn.cursor()
         c.execute("SELECT title FROM books WHERE id=?", (book_id,))
         title = c.fetchone()[0]
         c.execute("DELETE FROM books WHERE id=?", (book_id,))
         conn.commit()
     log_action(f"🗑️ تم حذف الكتاب: {title}")
-    # googlebackup("r"A:\Library\Python\FTP\FTP\books.db"")
+    # googlebackup("Books_NAME")
     return redirect(url_for('books'))
     # REMOVE-DELETE BOOK TO BOOKSHELF COMMAND
 
@@ -542,7 +581,7 @@ def delete_book(book_id):
 def update_page(book_id):
     new_page = int(request.form['current_page'])
 
-    with sqlite3.connect(r"A:\Library\Python\FTP\FTP\books.db") as conn:
+    with sqlite3.connect(Books_NAME) as conn:
         c = conn.cursor()
 
         # احصل على الصفحة الحالية القديمة من قاعدة البيانات
@@ -567,7 +606,7 @@ def update_page(book_id):
 
             # سجل التغيير
             log_action(f"📖 تحديث صفحات كتاب: {title} من {old_page} إلى {new_page}")
-#    googlebackup("r"A:\Library\Python\FTP\FTP\books.db"")
+#    googlebackup("Books_NAME")
     return redirect(url_for('books'))
     # UPDATE BOOK PAGES COMMAND
 
@@ -595,7 +634,7 @@ def get_weeks_with_dates(start_date):
     return weeks
     # LOAD WEEKS & DATES TO PAGE COMMAND
 def get_all_entries():
-    conn = sqlite3.connect(DB_NAME)
+    conn = sqlite3.connect(Sport_NAME)
     c = conn.cursor()
     c.execute("SELECT date, distance, time, odo, calories FROM entries")
     rows = c.fetchall()
@@ -612,7 +651,7 @@ def get_all_entries():
     # LOAD DAY CAOUNT TO PAGE COMMAND
 
 def get_entry(date_):
-    conn = sqlite3.connect(DB_NAME)
+    conn = sqlite3.connect(Sport_NAME)
     c = conn.cursor()
     c.execute("SELECT distance, time, odo, calories FROM entries WHERE date=?", (date_,))
     row = c.fetchone()
@@ -624,7 +663,7 @@ def get_entry(date_):
     # GET WEEKS & DATES TO PAGE COMMAND
 
 def save_entry(date_, distance, time_, odo, calories):
-    conn = sqlite3.connect(DB_NAME)
+    conn = sqlite3.connect(Sport_NAME)
     c = conn.cursor()
     c.execute('''
         INSERT INTO entries (date, distance, time, odo, calories)
