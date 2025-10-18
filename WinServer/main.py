@@ -13,7 +13,6 @@ from datetime import date, timedelta
 import socket
 from flask import jsonify, send_file,abort
 import time
-from downloader.downloaderscript import audio
 import shutil
 import os
 import sqlite3
@@ -38,11 +37,11 @@ finally:
 ##############
 socketio = SocketIO(app, async_mode="eventlet", cors_allowed_origins="*")
 
-UPLOAD_FOLDER = r"WinServer/uploads"
+UPLOAD_FOLDER = r"uploads"
 TEXT_STORAGE = []
-TEXT_UPLOAD_FOLDER = r"WinServer/text"
+TEXT_UPLOAD_FOLDER = r"text"
 
-TEXT_FILE_PATH = r"WinServer/text/uploaded_texts.txt"
+TEXT_FILE_PATH = r"text/uploaded_texts.txt"
 
 last_received_command = None
 #app = Flask(__name__)
@@ -52,10 +51,10 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['images_folder'] = 'uploads/bookimages'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['backup_folder'] = 'backup'
-LOG_FILE = r"WinServer/log/book_logs"
-Sport_NAME = r"A:\Library\Python\ACL SERVER\WinServer\ryadh.db"
-Books_NAME = r"A:\Library\Python\ACL SERVER\WinServer\books.db"
-LOG_FILE_RYADH = r"WinServer/log/ryadh.log"
+LOG_FILE = r"log/book_logs"
+Sport_NAME = r"ryadh.db"
+Books_NAME = r"books.db"
+LOG_FILE_RYADH = r"log/ryadh.log"
 
 
 weeks_data = [
@@ -70,15 +69,11 @@ def create_folders(folder_list):
     base_dir = os.path.dirname(os.path.abspath(__file__))
     for folder in folder_list:
         os.makedirs(os.path.join(base_dir, folder), exist_ok=True)
-def ryadh_db(db_path: str = "books.db", overwrite: bool = False):
+def ryadh_db(db_path: str = "ryadh.db", overwrite: bool = False):
     conn = sqlite3.connect(Sport_NAME)
     c = conn.cursor()
     if Sport_NAME.exists() and not overwrite:
         raise FileExistsError(f"Database already exists: {Sport_NAME}")
-
-    # Drop the old table if overwrite is True
-    if overwrite:
-        c.execute("DROP TABLE IF EXISTS books")
 
     c.execute('''
         CREATE TABLE IF NOT EXISTS entries (
@@ -99,12 +94,10 @@ def books_db(db_path: str = "books.db", overwrite: bool = False):
     matching the exact schema you showed in your screenshot.
     """
 
-    db_file = "WinServer/books.db"
+    db_file = "books.db"
     # Connect (this creates the file automatically if it doesn’t exist)
     conn = sqlite3.connect(db_file)
     cur = conn.cursor()
-    if db_file.exists() and not overwrite:
-        raise FileExistsError(f"Database already exists: {db_file}")
 
     # Drop the old table if overwrite is True
     if overwrite:
@@ -158,10 +151,11 @@ def start_server():
     # scheduler.start()
     print("starting server...")
     create_folders(["uploads", "text", "backup", "log", "streamdvideo", "downloader"])
+    os.makedirs("uploads/bookimages",exist_ok=True)
     print(f"Your IP is: {local_ip}")
     socketio.run(app, host=local_ip, port=5000,debug=True)
-    books_db(Books_NAME, overwrite=False)
-    ryadh_db(Sport_NAME, overwrite=False)
+#    books_db(Books_NAME, overwrite=False)
+#    ryadh_db(Sport_NAME, overwrite=False)
 
 #######################DEF'S#######################
 
@@ -203,7 +197,7 @@ def quiz():
     # STUDY QUIZ EXAM
 @app.route('/video')
 def stream_video():
-    video_dir = r"WinServer/streamdvideo"
+    video_dir = r"streamdvideo"
 
     # List all mp4 files in the directory
     mp4_files = [f for f in os.listdir(video_dir) if f.lower().endswith('.mp4')]
@@ -379,30 +373,30 @@ from flask import Flask, render_template, request, flash, redirect, url_for
 from flask_socketio import SocketIO
 import threading
 
-@app.route('/d', methods=['GET', 'POST'])
-def downloader():
-    url = ''
-
-    if request.method == "POST":
-        url = request.form.get("url")
-        if url:
-            def emit_msg(event, data):
-                socketio.emit(event, data)
-
-            # شغل audio في Thread لتجنب حظر السيرفر
-            def worker():
-                try:
-                    file_path, title = audio(url, emit=emit_msg)
-                    # بعد ما يجهز الملف ابعث event للـ client
-                    download_url = f"/download/{os.path.basename(file_path)}"
-                    socketio.emit("download_ready", {"url": download_url, "title": title})
-                except Exception as e:
-                    emit_msg("progress", f"❌ Error: {str(e)}")
-
-            threading.Thread(target=worker).start()
-
-    return render_template("dow.html", url=url)
-
+# @app.route('/d', methods=['GET', 'POST'])
+# def downloader():
+#     url = ''
+#
+#     if request.method == "POST":
+#         url = request.form.get("url")
+#         if url:
+#             def emit_msg(event, data):
+#                 socketio.emit(event, data)
+#
+#             # شغل audio في Thread لتجنب حظر السيرفر
+#             def worker():
+#                 try:
+#                     file_path, title = audio(url, emit=emit_msg)
+#                     # بعد ما يجهز الملف ابعث event للـ client
+#                     download_url = f"/download/{os.path.basename(file_path)}"
+#                     socketio.emit("download_ready", {"url": download_url, "title": title})
+#                 except Exception as e:
+#                     emit_msg("progress", f"❌ Error: {str(e)}")
+#
+#             threading.Thread(target=worker).start()
+#
+#     return render_template("dow.html", url=url)
+#
 
 
 
@@ -606,7 +600,7 @@ def update_page(book_id):
     # UPDATE BOOK PAGES COMMAND
 
 
-@app.route('/uploads/bookimages/<filename>')
+@app.route('/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['images_folder'], filename)
     # LOAD BOOK IMAGES ON BOOKSHELF PAGE COMMAND
