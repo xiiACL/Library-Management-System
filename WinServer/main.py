@@ -163,6 +163,7 @@ def start_server():
     # scheduler.add_job(func=backup_db, trigger='interval', weeks=1)
     # scheduler.start()
     print("starting server...")
+    foldersandfiles()
     print(f"Your IP is: {local_ip}")
     socketio.run(app, host=local_ip, port=5000,debug=True)
     # books_db(Books_NAME, overwrite=False)
@@ -469,7 +470,7 @@ def books():
     else:
         query += " ORDER BY last_read DESC"
 
-    with sqlite3.connect(Books_NAME) as conn:
+    with sqlite3.connect("WinServer/books.db") as conn:
         c = conn.cursor()
         c.execute(query, params)
         books = c.fetchall()
