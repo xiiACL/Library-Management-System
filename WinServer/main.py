@@ -49,12 +49,12 @@ last_received_command = None
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-app.config['bookimages'] = r"WinServer/uploads/bookimages"
+app.config['images_folder'] = 'uploads/bookimages'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['backup_folder'] = 'backup'
 LOG_FILE = r"WinServer/log/book_logs"
-Sport_NAME = r"WinServer/ryadh.db"
-Books_NAME = r"WinServer/books.db"
+Sport_NAME = r"A:\Library\Python\ACL SERVER\WinServer\ryadh.db"
+Books_NAME = r"A:\Library\Python\ACL SERVER\WinServer\books.db"
 LOG_FILE_RYADH = r"WinServer/log/ryadh.log"
 
 
@@ -66,16 +66,10 @@ weeks_data = [
 ]
 
 ##### Create the folders/files:
-def foldersandfiles():
-    os.makedirs("WinServer/uploads", exist_ok=True)
-    os.makedirs("WinServer/text", exist_ok=True)
-    os.makedirs("WinServer/uploads/bookimages", exist_ok=True)
-    os.makedirs("WinServer/backup", exist_ok=True)
-    os.makedirs("WinServer/log", exist_ok=True)
-    os.makedirs("WinServer/backup", exist_ok=True)
-    os.makedirs("WinServer/streamdvideo", exist_ok=True)
-    os.makedirs("WinServer/downloader", exist_ok=True)
-
+def create_folders(folder_list):
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    for folder in folder_list:
+        os.makedirs(os.path.join(base_dir, folder), exist_ok=True)
 def ryadh_db(db_path: str = "books.db", overwrite: bool = False):
     conn = sqlite3.connect(Sport_NAME)
     c = conn.cursor()
@@ -158,16 +152,16 @@ logging.basicConfig(
 #######################DEF'S#######################
 
 def start_server():
-#    init_db()
+    init_db()
     # scheduler = BackgroundScheduler()
     # scheduler.add_job(func=backup_db, trigger='interval', weeks=1)
     # scheduler.start()
     print("starting server...")
-    foldersandfiles()
+    create_folders(["uploads", "text", "backup", "log", "streamdvideo", "downloader"])
     print(f"Your IP is: {local_ip}")
     socketio.run(app, host=local_ip, port=5000,debug=True)
-    # books_db(Books_NAME, overwrite=False)
-    # ryadh_db(Sport_NAME, overwrite=False)
+    books_db(Books_NAME, overwrite=False)
+    ryadh_db(Sport_NAME, overwrite=False)
 
 #######################DEF'S#######################
 
@@ -384,7 +378,7 @@ def server():
 from flask import Flask, render_template, request, flash, redirect, url_for
 from flask_socketio import SocketIO
 import threading
-33
+
 @app.route('/d', methods=['GET', 'POST'])
 def downloader():
     url = ''
@@ -470,10 +464,10 @@ def books():
     else:
         query += " ORDER BY last_read DESC"
 
-    with sqlite3.connect("WinServer/books.db") as conn:
-        c = conn.cursor()
-        c.execute(query, params)
-        books = c.fetchall()
+    with sqlite3.connect(Books_NAME) as conn:
+        cnw = conn.cursor()
+        cnw.execute(query, params)
+        books = cnw.fetchall()
 
     return render_template('books3.html', books=books, search=search, sort=sort)
     # LOAD BOOKSHELF PAGE COMMAND
