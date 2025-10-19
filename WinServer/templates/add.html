@@ -5,23 +5,23 @@
   <title>➕ إضافة كتاب</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 p-4 max-w-xl mx-auto">
+<body class="bg-gray-900 text-gray-100 p-4 max-w-xl mx-auto">
   <h1 class="text-2xl font-bold mb-6">➕ إضافة كتاب جديد</h1>
 
   <form action="/add" method="POST" enctype="multipart/form-data" class="space-y-4">
-    <label>
+    <label class="block">
       عنوان الكتاب:
-      <input type="text" name="title" required class="w-full border px-3 py-2 rounded" />
+      <input type="text" name="title" required class="w-full bg-gray-800 border border-gray-700 px-3 py-2 rounded text-gray-100" />
     </label>
 
-    <label>
+    <label class="block">
       المؤلف:
-      <input type="text" name="author" class="w-full border px-3 py-2 rounded" />
+      <input type="text" name="author" class="w-full bg-gray-800 border border-gray-700 px-3 py-2 rounded text-gray-100" />
     </label>
 
-    <label>
+    <label class="block">
       التصنيف:
-      <select name="category" class="w-full border px-3 py-2 rounded" required>
+      <select name="category" class="w-full bg-gray-800 border border-gray-700 px-3 py-2 rounded text-gray-100" required>
         <option value="">اختر التصنيف</option>
         <option value="رواية">رواية</option>
         <option value="ديني">ديني</option>
@@ -30,57 +30,56 @@
         <option value="تاريخ">تاريخ</option>
         <option value="علوم">علوم</option>
         <option value="تطوير ذات">تطوير ذات</option>
-
       </select>
     </label>
 
-    <label>
+    <label class="block">
       إجمالي الصفحات:
-      <input type="number" name="total_pages" min="0" class="w-full border px-3 py-2 rounded" />
+      <input type="number" name="total_pages" min="0" class="w-full bg-gray-800 border border-gray-700 px-3 py-2 rounded text-gray-100" />
     </label>
 
-    <label>
+    <label class="block">
       الصفحة الحالية:
-      <input type="number" name="current_page" min="0" class="w-full border px-3 py-2 rounded" />
+      <input type="number" name="current_page" min="0" class="w-full bg-gray-800 border border-gray-700 px-3 py-2 rounded text-gray-100" />
     </label>
 
-    <label>
+    <label class="block">
       تاريخ الشراء:
-      <input type="date" name="purchase_date" class="w-full border px-3 py-2 rounded" />
+      <input type="date" name="purchase_date" class="w-full bg-gray-800 border border-gray-700 px-3 py-2 rounded text-gray-100" />
     </label>
 
-    <label>
+    <label class="block">
       آخر قراءة:
-      <input type="datetime-local" name="last_read" class="w-full border px-3 py-2 rounded" />
+      <input type="datetime-local" name="last_read" class="w-full bg-gray-800 border border-gray-700 px-3 py-2 rounded text-gray-100" />
     </label>
 
-    <label>
+    <label class="block">
       نوع الكتاب:
-      <select name="book_format" class="w-full border px-3 py-2 rounded">
+      <select name="book_format" class="w-full bg-gray-800 border border-gray-700 px-3 py-2 rounded text-gray-100">
         <option value="">اختياري</option>
         <option value="PDF">PDF</option>
         <option value="ورقي">ورقي</option>
       </select>
     </label>
 
-    <label>
+    <label class="block">
       صورة الغلاف:
-      <input type="file" name="cover_image" accept="image/*" class="w-full border px-3 py-2 rounded" />
+      <input type="file" name="cover_image" accept="image/*" class="w-full bg-gray-800 border border-gray-700 px-3 py-2 rounded text-gray-100" />
     </label>
 
-    <label>
+    <label class="block">
       اسم السلسلة (إن وجد):
-      <input type="text" name="series_name" class="w-full border px-3 py-2 rounded" />
+      <input type="text" name="series_name" class="w-full bg-gray-800 border border-gray-700 px-3 py-2 rounded text-gray-100" />
     </label>
 
-    <label>
+    <label class="block">
       رقم الجزء (إن وجد):
-      <input type="number" name="series_part" min="1" class="w-full border px-3 py-2 rounded" />
+      <input type="number" name="series_part" min="1" class="w-full bg-gray-800 border border-gray-700 px-3 py-2 rounded text-gray-100" />
     </label>
 
-    <div class="flex gap-4">
-      <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">إضافة</button>
-      <a href="/Books" class="bg-gray-600 text-white px-4 py-2 rounded">عودة</a>
+    <div class="flex gap-4 mt-4">
+      <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">إضافة</button>
+      <a href="/Books" class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800 transition">عودة</a>
     </div>
   </form>
 </body>

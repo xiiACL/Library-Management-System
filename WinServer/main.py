@@ -48,44 +48,17 @@ last_received_command = None
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-app.config['images_folder'] = 'uploads/bookimages'
+app.config['images_folder'] = 'bookimages'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['backup_folder'] = 'backup'
-LOG_FILE = r"log/book_logs"
-Sport_NAME = r"ryadh.db"
+LOG_FILE = r"log/book.txt"
 Books_NAME = r"books.db"
-LOG_FILE_RYADH = r"log/ryadh.log"
-
-
-weeks_data = [
-    [("الجمعة", 10, 2), ("السبت", 12, 2), ("الأحد", 15, 2), ("الاثنين", 10, 2), ("الثلاثاء", 15, 2), ("الأربعاء", 0, 0), ("الخميس", 20, 2)],
-    [("الجمعة", 15, 3), ("السبت", 18, 3), ("الأحد", 20, 3), ("الاثنين", 15, 3), ("الثلاثاء", 20, 3), ("الأربعاء", 0, 0), ("الخميس", 25, 3)],
-    [("الجمعة", 20, 4), ("السبت", 25, 4), ("الأحد", 15, 4), ("الاثنين", 20, 4), ("الثلاثاء", 25, 4), ("الأربعاء", 0, 0), ("الخميس", 30, 4)],
-    [("الجمعة", 25, 5), ("السبت", 30, 5), ("الأحد", 20, 5), ("الاثنين", 25, 5), ("الثلاثاء", 30, 5), ("الأربعاء", 0, 0), ("الخميس", 35, 5)],
-]
 
 ##### Create the folders/files:
 def create_folders(folder_list):
     base_dir = os.path.dirname(os.path.abspath(__file__))
     for folder in folder_list:
         os.makedirs(os.path.join(base_dir, folder), exist_ok=True)
-def ryadh_db(db_path: str = "ryadh.db", overwrite: bool = False):
-    conn = sqlite3.connect(Sport_NAME)
-    c = conn.cursor()
-    if Sport_NAME.exists() and not overwrite:
-        raise FileExistsError(f"Database already exists: {Sport_NAME}")
-
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS entries (
-            date TEXT PRIMARY KEY,
-            distance REAL,
-            time REAL,
-            odo REAL,
-            calories REAL
-        )
-    ''')
-    conn.commit()
-    conn.close()
 
 
 def books_db(db_path: str = "books.db", overwrite: bool = False):
@@ -150,24 +123,12 @@ def start_server():
     # scheduler.add_job(func=backup_db, trigger='interval', weeks=1)
     # scheduler.start()
     print("starting server...")
-    create_folders(["uploads", "text", "backup", "log", "streamdvideo", "downloader"])
-    os.makedirs("uploads/bookimages",exist_ok=True)
+    create_folders(["uploads", "text", "backup", "log", "streamdvideo", "downloader","bookimages"])
     print(f"Your IP is: {local_ip}")
     socketio.run(app, host=local_ip, port=5000,debug=True)
-#    books_db(Books_NAME, overwrite=False)
-#    ryadh_db(Sport_NAME, overwrite=False)
 
 #######################DEF'S#######################
 
-# Function that runs in a separate thread to print the received command
-def print_command():
-    global last_received_command
-    while True:
-        time.sleep(1)  # Sleep for a second before checking the command
-        if last_received_command:
-            print(f"Last received command: {last_received_command}")
-            # Reset the command after printing, so it won't keep printing the same command
-            last_received_command = None
 
 #######################SERVER DEF'S#######################
 #------> @app.route
@@ -186,15 +147,8 @@ def ser():
     return render_template('server.html')
     # SHARE TEXT & FILES WINDOW
 
-@app.route('/store')
-def store():
-    return render_template('store.html')
-    # UNUSED STORE PAGE
 
-@app.route('/quiz')
-def quiz():
-    return render_template('quiz.html')
-    # STUDY QUIZ EXAM
+
 @app.route('/video')
 def stream_video():
     video_dir = r"streamdvideo"
@@ -213,30 +167,6 @@ def stream_video():
     return send_file(video_path, mimetype='video/mp4')
     # STREAM VIDEO PAGE ( CINEMA )
 
-@app.route('/cmd', methods=['GET'])
-def cmd():
-    return render_template('cmd.html')
-    # DISCORD COMMAND BOT
-
-
-# Endpoint to receive the command and save it to the variable
-@app.route('/cmd', methods=['GET'])
-def save_command():
-    global last_received_command
-    command = request.args.get('cmd')  # Get the command from the query string
-    if command:
-        last_received_command = command  # Save it to the variable
-        print(f"Command received: {command}")  # Print the received command to the console
-        return jsonify({"status": "success", "command": last_received_command})
-    return jsonify({"status": "error", "message": "No command received"}), 400
-    # DISCORD COMMAND BOT #2
-# Endpoint to check the last command saved
-@app.route('/last_command', methods=['GET'])
-def get_last_command():
-    if last_received_command:
-        return jsonify({"last_command": last_received_command})
-    return jsonify({"status": "error", "message": "No command received yet"}), 404
-    # DISCORD COMMAND BOT #3
 
 @app.route('/get_data')
 def get_data():
@@ -369,41 +299,12 @@ def server():
     # LOAD SAHRE FILE AND TEXT PAGE COMMAND
 
 
-from flask import Flask, render_template, request, flash, redirect, url_for
-from flask_socketio import SocketIO
-import threading
-
-# @app.route('/d', methods=['GET', 'POST'])
-# def downloader():
-#     url = ''
-#
-#     if request.method == "POST":
-#         url = request.form.get("url")
-#         if url:
-#             def emit_msg(event, data):
-#                 socketio.emit(event, data)
-#
-#             # شغل audio في Thread لتجنب حظر السيرفر
-#             def worker():
-#                 try:
-#                     file_path, title = audio(url, emit=emit_msg)
-#                     # بعد ما يجهز الملف ابعث event للـ client
-#                     download_url = f"/download/{os.path.basename(file_path)}"
-#                     socketio.emit("download_ready", {"url": download_url, "title": title})
-#                 except Exception as e:
-#                     emit_msg("progress", f"❌ Error: {str(e)}")
-#
-#             threading.Thread(target=worker).start()
-#
-#     return render_template("dow.html", url=url)
-#
-
 
 
 def backup_db():
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     src = Books_NAME
-    dst = os.path.join(app.config['backup_folder'], f'books_backup_{timestamp}.db')
+    dst = os.path.join(app.config['backup'], f'books_backup_{timestamp}.db')
     shutil.copy2(src, dst)
     print(f"[✔] تم إنشاء نسخة احتياطية: {dst}")
     log_action(f"[✔] تم إنشاء نسخة احتياطية: {dst}")
@@ -463,7 +364,7 @@ def books():
         cnw.execute(query, params)
         books = cnw.fetchall()
 
-    return render_template('books3.html', books=books, search=search, sort=sort)
+    return render_template('books.html', books=books, search=search, sort=sort)
     # LOAD BOOKSHELF PAGE COMMAND
 
 @app.route('/add', methods=['GET', 'POST'])
@@ -604,196 +505,5 @@ def update_page(book_id):
 def uploaded_file(filename):
     return send_from_directory(app.config['images_folder'], filename)
     # LOAD BOOK IMAGES ON BOOKSHELF PAGE COMMAND
-
-
-def get_weeks_with_dates(start_date):
-    weeks = []
-    for week in weeks_data:
-        week_list = []
-        for day_name, duration, resistance in week:
-            day_info = {
-                "day_name": day_name,
-                "duration": duration,
-                "resistance": resistance,
-                "date": start_date.strftime("%Y-%m-%d")
-            }
-            week_list.append(day_info)
-            start_date += timedelta(days=1)
-        weeks.append(week_list)
-    return weeks
-    # LOAD WEEKS & DATES TO PAGE COMMAND
-def get_all_entries():
-    conn = sqlite3.connect(Sport_NAME)
-    c = conn.cursor()
-    c.execute("SELECT date, distance, time, odo, calories FROM entries")
-    rows = c.fetchall()
-    conn.close()
-    entries = {}
-    for d, dist, t, odo, cal in rows:
-        entries[d] = {
-            "distance": dist,
-            "time": t,
-            "odo": odo,
-            "calories": cal
-        }
-    return entries
-    # LOAD DAY CAOUNT TO PAGE COMMAND
-
-def get_entry(date_):
-    conn = sqlite3.connect(Sport_NAME)
-    c = conn.cursor()
-    c.execute("SELECT distance, time, odo, calories FROM entries WHERE date=?", (date_,))
-    row = c.fetchone()
-    conn.close()
-    if row:
-        return {"distance": row[0], "time": row[1], "odo": row[2], "calories": row[3]}
-    else:
-        return {"distance": "", "time": "", "odo": "", "calories": ""}
-    # GET WEEKS & DATES TO PAGE COMMAND
-
-def save_entry(date_, distance, time_, odo, calories):
-    conn = sqlite3.connect(Sport_NAME)
-    c = conn.cursor()
-    c.execute('''
-        INSERT INTO entries (date, distance, time, odo, calories)
-        VALUES (?, ?, ?, ?, ?)
-        ON CONFLICT(date) DO UPDATE SET
-          distance=excluded.distance,
-          time=excluded.time,
-          odo=excluded.odo,
-          calories=excluded.calories
-    ''', (date_, distance, time_, odo, calories))
-    conn.commit()
-    conn.close()
-    # SAVE WEEKS & DATES TO PAGE COMMAND
-
-def log_action_update(date_, old_data, new_data):
-    with open(LOG_FILE_RYADH, 'a', encoding='utf-8') as f:
-        current_datetime = datetime.now()
-        f.write(f"تحديث بيانات\n{date_}\n")
-        f.write(f"\n{current_datetime}")
-        f.write("من\n")
-        f.write(f"المسافة: {old_data.get('distance', '')}\n")
-        f.write(f"الوقت: {old_data.get('time', '')}\n")
-        f.write(f"العداد: {old_data.get('odo', '')}\n")
-        f.write(f"السعرات: {old_data.get('calories', '')}\n")
-        f.write("إلى\n")
-        f.write(f"المسافة: {new_data.get('distance', '')}\n")
-        f.write(f"الوقت: {new_data.get('time', '')}\n")
-        f.write(f"العداد: {new_data.get('odo', '')}\n")
-        f.write(f"السعرات: {new_data.get('calories', '')}\n")
-        f.write("-" * 20 + "\n")
-def evaluate_performance(distance_km, time_min, calories):
-    if time_min == 0:
-        return "لا يوجد وقت مسجل"
-
-    speed = (distance_km / time_min) * 60  # كم/ساعة
-
-    if speed < 10:
-        level = "خفيف"
-    elif 10 <= speed < 18:
-        level = "متوسط"
-    else:
-        level = "عالي"
-
-    if calories < 100:
-        cal_level = "سعرات منخفضة"
-    elif 100 <= calories < 200:
-        cal_level = "سعرات متوسطة"
-    else:
-        cal_level = "سعرات عالية"
-
-    return f"أداء التمرين: {level}، {cal_level}."
-    # GET SPEED, CAL RATE TO PAGE COMMAND
-@app.route("/ryadh")
-def ryadh():
-    start = date(2025,7,21)
-    weeks = get_weeks_with_dates(start)
-    all_entries = get_all_entries()
-    weekly_summaries = []
-    weekly_calories = []
-    weekly_distances = []
-
-    for week in weeks:
-        total_time = 0
-        total_cal = 0
-        total_dist = 0
-        for day in week:
-            entry = all_entries.get(day["date"])
-            if entry:
-                total_time += float(entry.get("time") or 0)
-                total_cal += float(entry.get("calories") or 0)
-                total_dist += float(entry.get("distance") or 0)
-
-                # هنا تضيف التقييم لكل يوم
-                day["evaluation"] = evaluate_performance(
-                    float(entry.get("distance") or 0),
-                    float(entry.get("time") or 0),
-                    float(entry.get("calories") or 0)
-                )
-            else:
-                day["evaluation"] = "لم يتم تسجيل بيانات"
-        weekly_summaries.append(round(total_time, 2))
-        weekly_calories.append(round(total_cal, 2))
-        weekly_distances.append(round(total_dist, 2))
-
-    return render_template(
-        "ryadh.html",
-        weeks=weeks,
-        entries=all_entries,
-        weekly_summaries=weekly_summaries,
-        weekly_calories=weekly_calories,
-        weekly_distances=weekly_distances,
-        enumerate=enumerate,
-    )
- # LOAD PAGE COMMAND
-
-@app.route("/editryadh", methods=["GET", "POST"])
-def editryadh():
-    day_date = request.args.get("date")
-    if not day_date:
-        return "يجب تحديد التاريخ!", 400
-
-    if request.method == "POST":
-        def to_number(value):
-            try:
-                return float(value) if '.' in value else int(value)
-            except:
-                return 0
-
-        old_data = get_entry(day_date)
-
-        dist = to_number(request.form.get("distance", "0"))
-        time_ = to_number(request.form.get("time", "0"))
-        odo = to_number(request.form.get("odo", "0"))
-        calories = to_number(request.form.get("calories", "0"))
-
-        new_data = {
-            "distance": dist,
-            "time": time_,
-            "odo": odo,
-            "calories": calories
-        }
-
-        save_entry(day_date, dist, time_, odo, calories)
-        log_action_update(day_date, old_data, new_data)
-
-        return redirect(url_for("ryadh"))
-
-    day_data = get_entry(day_date)
-    return render_template("editryadh.html", date=day_date, data=day_data)
-    # LOAD PAGE COMMAND
-@app.route("/d3", methods=["GET", "POST"])
-def d3():
-    if request.method == "POST":
-        url = request.form.get("url")
-        start_time = request.form.get("start_time")
-        end_time = request.form.get("end_time")
-        print("URL:", url)
-        print("Start Time:", start_time)
-        print("End Time:", end_time)
-        return render_template("d3.html", url=url, start_time=start_time, end_time=end_time, submitted=True)
-    return render_template("d3.html", submitted=False)
-
 
 start_server()
