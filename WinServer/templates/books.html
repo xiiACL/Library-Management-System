@@ -1,95 +1,0 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl" class="dark">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>📚 مكتبتي</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-900 text-white p-4">
-  <div class="max-w-4xl mx-auto">
-
-    <h1 class="text-3xl font-bold mb-4 text-center">📚 مكتبتي</h1>
-
-    <form action="/Books" method="GET" class="mb-6 flex items-center gap-2 flex-wrap" id="searchForm">
-      <input
-        type="text"
-        name="q"
-        placeholder="ابحث عن كتاب..."
-        value="{{ search }}"
-        class="flex-1 px-4 py-2 rounded border bg-gray-700 border-gray-600"
-      />
-      <select name="sort" class="px-3 py-2 border rounded bg-gray-700 border-gray-600" onchange="document.getElementById('searchForm').submit()">
-        <option value="">🔀 ترتيب</option>
-        <option value="last_read" {% if sort == 'last_read' %}selected{% endif %}>📖 الأحدث قراءة</option>
-        <option value="created_at" {% if sort == 'created_at' %}selected{% endif %}>🗓️ الأحدث إضافة</option>
-      </select>
-      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">🔍 بحث</button>
-      <a href="/add" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">➕ إضافة كتاب</a>
-    </form>
-
-    <h2 class="text-lg mb-4">📦 عدد الكتب: {{ books|length }}</h2>
-
-    <div class="grid gap-4">
-      {% for book in books %}
-      <div class="bg-gray-800 text-white shadow-md rounded p-4 flex flex-col md:flex-row gap-4">
-
-        <!-- صورة الغلاف -->
-        {% if book[9] %}
-          <img src="{{ url_for('uploaded_file', filename=book[9]) }}" alt="غلاف {{ book[1] }}" class="w-32 h-48 object-cover rounded shadow" />
-        {% else %}
-          <div class="w-32 h-48 bg-gray-600 rounded flex items-center justify-center text-gray-300">
-            لا توجد صورة
-          </div>
-        {% endif %}
-
-        <!-- تفاصيل الكتاب -->
-        <div class="flex-1">
-          <p class="text-xl font-bold mb-2">{{ book[1] }}</p>
-          <p>👤 المؤلف: {{ book[2] or 'غير معروف' }}</p>
-          <p>🏷️ التصنيف: {{ book[3] or 'غير محدد' }}</p>
-          {% if book[12] %}
-            <p>📚 السلسلة: {{ book[12] }}{% if book[13] %} - الجزء {{ book[13] }}{% endif %}</p>
-          {% endif %}
-          <p>📄 الصفحة: {{ book[5] }}/{{ book[4] }}</p>
-          <p>📘 المتبقي: {{ book[4] - book[5] }} صفحة</p>
-
-          <!-- شريط التقدم -->
-          <div class="w-full bg-gray-700 rounded h-2 mt-2">
-            <div class="bg-blue-600 h-2 rounded" style="width: {{ (book[5] / book[4]) * 100 if book[4] else 0 }}%"></div>
-          </div>
-
-          <p class="mt-2">🛒 تاريخ الشراء: {{ book[6] or 'غير محدد' }}</p>
-          {% if book[7] %}
-            <p>📖 آخر قراءة: {{ book[7].replace('T', ' ') }}</p>
-          {% else %}
-            <p>📖 آخر قراءة: غير محددة</p>
-          {% endif %}
-          <p>📚 النوع: {{ book[8] or 'غير محدد' }}</p>
-          <p>🗓️ تاريخ الإضافة: {{ book[10] or 'غير متوفر' }}</p>
-          <p>✏️ آخر تعديل: {{ book[11] or 'غير متوفر' }}</p>
-
-          <!-- أزرار التحديث -->
-          <form action="/update_page/{{ book[0] }}" method="POST" class="mt-4 flex items-center gap-2 flex-wrap">
-            <input
-              type="number"
-              name="current_page"
-              min="0"
-              max="{{ book[4] }}"
-              value="{{ book[5] }}"
-              class="w-24 px-2 py-1 border rounded bg-gray-700 border-gray-600"
-              required
-            />
-            <button type="submit" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition">💾 تحديث</button>
-            <a href="/edit/{{ book[0] }}" class="bg-yellow-400 text-black px-3 py-1 rounded hover:bg-yellow-500 transition">✏️ تعديل</a>
-            <a href="/delete/{{ book[0] }}" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition">🗑️ حذف</a>
-          </form>
-        </div>
-      </div>
-      {% else %}
-      <p class="text-center text-gray-400">لا توجد كتب حالياً</p>
-      {% endfor %}
-    </div>
-  </div>
-</body>
-</html>
