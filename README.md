@@ -24,6 +24,10 @@ It allows you to manage your personal library, track your reading progress, and 
 ---
 
 ## ⚙️ How to Run
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/your-repo-name.git
+1. **Open the project** in any Python IDE — such as **PyCharm**, **VS Code**, or **Thonny**.  
+2. **Run** the `main.py` file.  
+3. **Open your browser** and go to:  
+   - `http://127.0.0.1:5000` (for local access)  
+   - or `http://{your-device-IP}:5000` (to access from another device on the same network)  
+4. 🎉 **Enjoy!** You can access the system from any device connected to the same network.
+
