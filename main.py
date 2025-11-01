@@ -6,7 +6,6 @@ from flask_socketio import SocketIO
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'supersecretkey'  # غيّرها عندك
 
-# ربط SocketIO مع Flask باستخدام eventlet
 socketio = SocketIO(app, async_mode="eventlet", cors_allowed_origins="*")
 import logging
 from datetime import date, timedelta
@@ -95,14 +94,9 @@ logging.basicConfig(
     format='%(asctime)s %(levelname)s: %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
-#######################DEF'S#######################
-
-
-#######################DEF'S#######################
 
 
 #######################SERVER DEF'S#######################
-#------> @app.route
 
 
 
@@ -289,14 +283,14 @@ def update_page(book_id):
     with sqlite3.connect(Books_NAME) as conn:
         c = conn.cursor()
 
-        # احصل على الصفحة الحالية القديمة من قاعدة البيانات
+        # Giting last page read
         c.execute("SELECT title, current_page FROM books WHERE id=?", (book_id,))
         result = c.fetchone()
 
         if result:
             title, old_page = result
 
-            # التحديث
+            # Update
             c.execute("""
                 UPDATE books 
                 SET current_page=?, last_read=?, updated_at=? 
@@ -309,7 +303,7 @@ def update_page(book_id):
             ))
             conn.commit()
 
-            # سجل التغيير
+            # Log
             log_action(f"📖 تحديث صفحات كتاب: {title} من {old_page} إلى {new_page}")
 #    googlebackup("Books_NAME")
     return redirect(url_for('books'))
