@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>✏️ تعديل كتاب</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    function confirmDelete() {
+      return confirm('هل أنت متأكد من حذف هذا الكتاب؟');
+    }
+  </script>
+</head>
+<body class="bg-gray-900 text-gray-100 p-4 max-w-xl mx-auto">
+  <h1 class="text-2xl font-bold mb-6">✏️ تعديل بيانات الكتاب</h1>
+
+  <form action="/edit/{{ book[0] }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+    <label class="block">
+      عنوان الكتاب:
+      <input type="text" name="title" required class="w-full bg-gray-800 border border-gray-700 px-3 py-2 rounded text-gray-100" value="{{ book[1] }}" />
+    </label>
+
+    <label class="block">
+      المؤلف:
+      <input type="text" name="author" class="w-full bg-gray-800 border border-gray-700 px-3 py-2 rounded text-gray-100" value="{{ book[2] }}" />
+    </label>
+
+    <label class="block">
+      التصنيف:
+      <select name="category" class="w-full bg-gray-800 border border-gray-700 px-3 py-2 rounded text-gray-100" required>
+        <option value="" {% if not book[3] %}selected{% endif %}>اختر التصنيف</option>
+        <option value="رواية" {% if book[3] == 'رواية' %}selected{% endif %}>رواية</option>
+        <option value="ديني" {% if book[3] == 'ديني' %}selected{% endif %}>ديني</option>
+        <option value="سيرة" {% if book[3] == 'سيرة' %}selected{% endif %}>سيرة</option>
+        <option value="ثقافة" {% if book[3] == 'ثقافة' %}selected{% endif %}>ثقافة</option>
+        <option value="تاريخ" {% if book[3] == 'تاريخ' %}selected{% endif %}>تاريخ</option>
+        <option value="علوم" {% if book[3] == 'علوم' %}selected{% endif %}>علوم</option>
+        <option value="تطوير ذات" {% if book[3] == 'تطوير ذات' %}selected{% endif %}>تطوير ذات</option>
+      </select>
+    </label>
+
+    <label class="block">
+      إجمالي الصفحات:
+      <input type="number" name="total_pages" min="0" class="w-full bg-gray-800 border border-gray-700 px-3 py-2 rounded text-gray-100" value="{{ book[4] }}" />
+    </label>
+
+    <label class="block">
+      الصفحة الحالية:
+      <input type="number" name="current_page" min="0" class="w-full bg-gray-800 border border-gray-700 px-3 py-2 rounded text-gray-100" value="{{ book[5] }}" />
+    </label>
+
+    <label class="block">
+      تاريخ الشراء:
+      <input type="date" name="purchase_date" class="w-full bg-gray-800 border border-gray-700 px-3 py-2 rounded text-gray-100" value="{{ book[6] }}" />
+    </label>
+
+    <label class="block">
+      آخر قراءة:
+      <input type="datetime-local" name="last_read" class="w-full bg-gray-800 border border-gray-700 px-3 py-2 rounded text-gray-100" value="{{ book[7] }}" />
+    </label>
+
+    <label class="block">
+      نوع الكتاب:
+      <select name="book_format" class="w-full bg-gray-800 border border-gray-700 px-3 py-2 rounded text-gray-100">
+        <option value="" {% if not book[8] %}selected{% endif %}>اختياري</option>
+        <option value="PDF" {% if book[8] == 'PDF' %}selected{% endif %}>PDF</option>
+        <option value="ورقي" {% if book[8] == 'ورقي' %}selected{% endif %}>ورقي</option>
+      </select>
+    </label>
+
+    <label class="block">
+      صورة الغلاف الحالية:
+      {% if book[9] %}
+        <img src="{{ url_for('uploaded_file', filename=book[9]) }}" alt="غلاف الكتاب" class="w-48 h-auto rounded border border-gray-700" />
+      {% else %}
+        <span class="text-gray-400">لا توجد صورة</span>
+      {% endif %}
+    </label>
+
+    <label class="block">
+      تغيير صورة الغلاف:
+      <input type="file" name="cover_image" accept="image/*" class="w-full bg-gray-800 border border-gray-700 px-3 py-2 rounded text-gray-100" />
+    </label>
+
+    <label class="block">
+      اسم السلسلة (إن وجد):
+      <input type="text" name="series_name" class="w-full bg-gray-800 border border-gray-700 px-3 py-2 rounded text-gray-100" value="{{ book[12] or '' }}" />
+    </label>
+
+    <label class="block">
+      رقم الجزء (إن وجد):
+      <input type="number" name="series_part" min="1" class="w-full bg-gray-800 border border-gray-700 px-3 py-2 rounded text-gray-100" value="{{ book[13] or '' }}" />
+    </label>
+
+    <div class="flex flex-wrap gap-4 mt-4">
+      <button type="submit" class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 transition">💾 حفظ التعديلات</button>
+      <a href="/Books" class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800 transition">⬅️ عودة</a>
+    </div>
+  </form>
+
+  <form action="/delete/{{ book[0] }}" method="POST" onsubmit="return confirmDelete();" class="mt-6">
+    <button type="submit" class="bg-red-700 text-white px-4 py-2 rounded hover:bg-red-800 transition">🗑️ حذف الكتاب</button>
+  </form>
+</body>
+</html>

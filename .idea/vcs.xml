@@ -3,6 +3,5 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Main" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/tweetpy" vcs="Git" />
   </component>
 </project>
